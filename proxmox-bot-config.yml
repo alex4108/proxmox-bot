@@ -1,0 +1,4 @@
+vms:
+  - logical_name: A
+    proxmox_vm_id: B
+    proxmox_host_url: C

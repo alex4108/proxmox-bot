@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proxmox-bot-live
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: proxmox-bot-live
+  template:
+    metadata:
+      labels:
+        name: proxmox-bot-live
+    spec:
+      restartPolicy: Always
+      tolerations:
+        - key: "node.kubernetes.io/unreachable"
+          operator: "Exists"
+          effect: "NoExecute"
+          tolerationSeconds: 10
+        - key: "node.kubernetes.io/not-ready"
+          operator: "Exists"
+          effect: "NoExecute"
+          tolerationSeconds: 10
+      containers:
+        - name: proxmox-bot-live
+          image: alex4108/proxmox-bot:GIT_SHA
+          env:
+            - name: proxmox_BOT_DISCORD_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: proxmox-bot-live-discord-token
+                  key: token
+            - name: proxmox_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: proxmox-bot-service-principal
+                  key: id
+            - name: proxmox_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: proxmox-bot-service-principal
+                  key: secret
+            - name: proxmox_SUBSCRIPTION_ID
+              valueFrom:
+                secretKeyRef:
+                  name: proxmox-bot-service-principal
+                  key: subscription
+            - name: proxmox_TENANT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: proxmox-bot-service-principal
+                  key: tenant
+            - name: CONFIG_PATH
+              value: /config/config.yml
+          volumeMounts:
+          - name: config
+            mountPath: "/config"
+            readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: proxmox-bot-live-config
+          items:
+          - key: "config"
+            path: "config.yml"
