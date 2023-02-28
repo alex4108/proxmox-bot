@@ -1,10 +1,13 @@
-PHONY: .build .docker .docker-release .test
+PHONY: .build .docker .docker-release .test .clean
 
 ifndef PROXMOX_BOT_TAG
 override PROXMOX_BOT_TAG = proxmox-bot
 endif
 
 .DEFAULT_GOAL := build
+
+clean:
+	rm -rf ./bin/
 
 build:
 	go mod tidy

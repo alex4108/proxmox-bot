@@ -79,3 +79,44 @@ func getConfigEntry(targetVM string) (ConfigEntry, error) {
 	}
 	return ConfigEntry{}, errors.New("failed to find a VM with that Name")
 }
+
+func getVmById(ce ConfigEntry) (*proxmox.VirtualMachine, error) {
+	pxmClient, err := makeProxmoxClient(ce.VMHostUrl, ce.VMHostName)
+	if err != nil {
+		log.Errorf("Failed makeProxmoxClient for %v, %v: %v", ce.VMHostUrl, ce.VMHostName, err)
+		return nil, errors.New("Failed to make proxmox client")
+	}
+
+	nodes, err := pxmClient.Nodes()
+	if err != nil {
+		log.Errorf("Failed to get nodes for proxmox server %s: %v", ce.VMHostUrl, err)
+		return nil, errors.New("failed to get nodes for proxmox server")
+	}
+
+	for k := range nodes {
+		nodeStatus := nodes[k]
+		log.Infof("Node: %v", nodeStatus)
+		log.Infof("Node Name: %v", nodeStatus.Node)
+		node, err := pxmClient.Node(nodeStatus.Node)
+		if err != nil {
+			log.Errorf("Failed to get node from proxmox server %s: %v", nodeStatus.Node, err)
+			continue
+		}
+
+		vms, err := node.VirtualMachines()
+		if err != nil {
+			log.Errorf("Failed to get VMs on node from proxmox server %s: %v", nodeStatus.Node, err)
+			continue
+		}
+
+		for k := range vms {
+			vm := vms[k]
+			vmIdStr := fmt.Sprintf("%v", vm.VMID)
+			if vmIdStr == ce.VMId {
+				log.Infof("Found VM %v on node %v", ce.LogicalName, nodeStatus.Node)
+				return vm, nil
+			}
+		}
+	}
+	return nil, errors.New("Search exhausted, VM not found")
+}

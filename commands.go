@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/luthermonson/go-proxmox"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -21,35 +20,44 @@ func startCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	log.Infof("Received start command for VM: %v", logicalName)
-
 	respond(s, m.ChannelID, "Starting VM "+logicalName+"...")
 
-	vm, err := getConfigEntry(logicalName)
+	ce, err := getConfigEntry(logicalName)
 	if err != nil {
 		log.Errorf("Failed getConfigEntry for %v: %v", logicalName, err)
 		respondError(s, m.ChannelID)
 		return
 	}
 
-	pxmClient, err := makeProxmoxClient(vm.VMHostUrl, vm.VMHostName)
+	pxmVm, err := getVmById(ce)
 	if err != nil {
-		log.Errorf("Failed makeProxmoxClient for %v, %v: %v", vm.VMHostUrl, vm.VMHostName, err)
+		log.Errorf("failed to obtain get VM by ID %v: %v", ce.VMId, err)
 		respondError(s, m.ChannelID)
 		return
 	}
 
-	pxmVm = &proxmox.VirtualMachine{}
-
-	pxmClient.Get(vm.VMId, *pxmVm)
+	task, err := pxmVm.Start()
 	if err != nil {
-		log.Errorf("failed to obtain a response: %v", err)
+		log.Errorf("failed to start VM: %v", err)
 		respondError(s, m.ChannelID)
 		return
 	}
+	respond(s, m.ChannelID, fmt.Sprintf("VM Start Requested, Task ID: %v", task.ID))
 
-	// todo verify VM started
-	log.Infof("VM %v started.", logicalName)
-	respond(s, m.ChannelID, "VM "+logicalName+" started.")
+	for task.IsRunning {
+		log.Infof("Waiting for VM to start...")
+		time.Sleep(1 * time.Second)
+	}
+
+	if task.IsFailed {
+		log.Errorf("VM Start TaskID %v FAILED: %v", task.ID, task)
+		respond(s, m.ChannelID, fmt.Sprintf("VM Start Task ID %v FAILED!, %v", task.ID, task))
+		return
+	} else {
+		log.Infof("VM Start TaskID %v SUCCEEDED: %v", task.ID, task)
+		respond(s, m.ChannelID, fmt.Sprintf("VM %v started!", ce.LogicalName))
+		return
+	}
 }
 
 func getLogicalNameFromCommand(content string) (string, error) {
@@ -75,18 +83,44 @@ func stopCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	log.Infof("Received stop command for VM: %v", logicalName)
-
 	respond(s, m.ChannelID, "Stopping VM "+logicalName+"...")
-	// todo Request Start via Proxmox API
+
+	ce, err := getConfigEntry(logicalName)
 	if err != nil {
-		log.Errorf("failed to obtain a response: %v", err)
+		log.Errorf("Failed getConfigEntry for %v: %v", logicalName, err)
 		respondError(s, m.ChannelID)
 		return
 	}
 
-	// todo verify VM started
-	log.Infof("VM %v stopped.", logicalName)
-	respond(s, m.ChannelID, "VM "+logicalName+" stopped.")
+	pxmVm, err := getVmById(ce)
+	if err != nil {
+		log.Errorf("failed to obtain get VM by ID %v: %v", ce.VMId, err)
+		respondError(s, m.ChannelID)
+		return
+	}
+
+	task, err := pxmVm.Shutdown()
+	if err != nil {
+		log.Errorf("failed to stop VM: %v", err)
+		respondError(s, m.ChannelID)
+		return
+	}
+	respond(s, m.ChannelID, fmt.Sprintf("VM Stop Requested, Task ID: %v", task.ID))
+
+	for task.IsRunning {
+		log.Infof("Waiting for VM to stop...")
+		time.Sleep(1 * time.Second)
+	}
+
+	if task.IsFailed {
+		log.Errorf("VM Stop TaskID %v FAILED: %v", task.ID, task)
+		respond(s, m.ChannelID, fmt.Sprintf("VM Stop Task ID %v FAILED!, %v", task.ID, task))
+		return
+	} else {
+		log.Infof("VM Stop TaskID %v SUCCEEDED: %v", task.ID, task)
+		respond(s, m.ChannelID, fmt.Sprintf("VM %v stopped!", ce.LogicalName))
+		return
+	}
 }
 
 // pingCommand is the command handler to ping the bot.

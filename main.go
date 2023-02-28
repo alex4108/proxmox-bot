@@ -56,6 +56,7 @@ func main() {
 	// Create a new Discord session using the provided bot token.
 	dg, err := discordgo.New("Bot " + Token)
 	if err != nil {
+		log.Errorf("%v", Token)
 		log.Error("error creating Discord session,", err)
 		os.Exit(3)
 	}
@@ -67,6 +68,7 @@ func main() {
 	// Open a websocket connection to Discord and begin listening.
 	err = dg.Open()
 	if err != nil {
+		log.Errorf("%v", Token)
 		log.Error("Error opening websocket connection,", err)
 		os.Exit(4)
 	}

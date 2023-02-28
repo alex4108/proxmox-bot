@@ -1,2 +1,4 @@
 bin/proxmox-bot
 __debug_bin
+.secrets
+.secret-config.yml
