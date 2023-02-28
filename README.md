@@ -69,7 +69,7 @@ data:
       - logical_name: A
         proxmox_vm_id: B
         proxmox_host_url: C
-        subscription_id: D
+        proxmox_host_name: D
 ```
 
 ### Discord Bot Setup

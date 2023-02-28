@@ -15,11 +15,12 @@ import (
 var Cfg *Config
 
 type ConfigEntry struct {
-	VMId         string `yaml:"proxmox_vm_id"`
-	LogicalName    string `yaml:"logical_name"`
-	VMHost  string `yaml:"proxmox_host_url"`
-	VMHostUser string
-	VMHostPass string
+	VMId        string `yaml:"proxmox_vm_id"`
+	LogicalName string `yaml:"logical_name"`
+	VMHostUrl   string `yaml:"proxmox_host_url"`
+	VMHostName  string `yaml:"proxmox_host_name"`
+	VMHostUser  string
+	VMHostPass  string
 }
 
 type Config struct {

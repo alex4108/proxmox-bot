@@ -26,31 +26,21 @@ spec:
         - name: proxmox-bot-live
           image: alex4108/proxmox-bot:GIT_SHA
           env:
-            - name: proxmox_BOT_DISCORD_TOKEN
+            - name: PROXMOX_BOT_DISCORD_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: proxmox-bot-live-discord-token
                   key: token
-            - name: proxmox_CLIENT_ID
+            - name: PVE1_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: proxmox-bot-service-principal
-                  key: id
-            - name: proxmox_CLIENT_SECRET
+                  name: pve1-api
+                  key: username
+            - name: PVE1_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: proxmox-bot-service-principal
-                  key: secret
-            - name: proxmox_SUBSCRIPTION_ID
-              valueFrom:
-                secretKeyRef:
-                  name: proxmox-bot-service-principal
-                  key: subscription
-            - name: proxmox_TENANT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: proxmox-bot-service-principal
-                  key: tenant
+                  name: pve1-api
+                  key: password
             - name: CONFIG_PATH
               value: /config/config.yml
           volumeMounts:
@@ -64,3 +54,5 @@ spec:
           items:
           - key: "config"
             path: "config.yml"
+
+            

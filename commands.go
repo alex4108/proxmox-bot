@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/luthermonson/go-proxmox"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -22,7 +23,24 @@ func startCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
 	log.Infof("Received start command for VM: %v", logicalName)
 
 	respond(s, m.ChannelID, "Starting VM "+logicalName+"...")
-	// todo Request Start via Proxmox API
+
+	vm, err := getConfigEntry(logicalName)
+	if err != nil {
+		log.Errorf("Failed getConfigEntry for %v: %v", logicalName, err)
+		respondError(s, m.ChannelID)
+		return
+	}
+
+	pxmClient, err := makeProxmoxClient(vm.VMHostUrl, vm.VMHostName)
+	if err != nil {
+		log.Errorf("Failed makeProxmoxClient for %v, %v: %v", vm.VMHostUrl, vm.VMHostName, err)
+		respondError(s, m.ChannelID)
+		return
+	}
+
+	pxmVm = &proxmox.VirtualMachine{}
+
+	pxmClient.Get(vm.VMId, *pxmVm)
 	if err != nil {
 		log.Errorf("failed to obtain a response: %v", err)
 		respondError(s, m.ChannelID)
