@@ -3,7 +3,7 @@ module github.com/alex4108/proxmox-bot
 go 1.18
 
 require (
-	github.com/bwmarrin/discordgo v0.26.1
+	github.com/bwmarrin/discordgo v0.27.0
 	github.com/luthermonson/go-proxmox v0.0.0-alpha3
 	github.com/sirupsen/logrus v1.9.0
 	gopkg.in/yaml.v2 v2.4.0
